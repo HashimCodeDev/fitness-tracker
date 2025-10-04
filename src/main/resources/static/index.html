@@ -3,129 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Tracker Dashboard</title>
+    <title>Fitness Tracker App - Desktop</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .page { display: none; animation: fadeIn 0.5s; }
+        .page.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .content-area::-webkit-scrollbar { width: 8px; }
+        .content-area::-webkit-scrollbar-track { background: transparent; }
+        .content-area::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        .content-area::-webkit-scrollbar-thumb:hover { background: #718096; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+<body class="bg-gray-900 text-white flex justify-center items-center min-h-screen p-4">
 
-<h1 class="text-3xl font-bold mb-8 text-indigo-600">💪 Fitness Tracker Dashboard</h1>
-
-<!-- USERS SECTION -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
-    <div class="bg-white shadow rounded-xl p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Add User</h2>
-        <form id="userForm" class="space-y-3">
-            <input type="text" id="userName" placeholder="Name" required
-                   class="w-full p-2 border rounded-md focus:ring-2 focus:ring-indigo-400"/>
-            <input type="email" id="userEmail" placeholder="Email" required
-                   class="w-full p-2 border rounded-md focus:ring-2 focus:ring-indigo-400"/>
-            <input type="number" step="0.1" id="userBmi" placeholder="BMI" required
-                   class="w-full p-2 border rounded-md focus:ring-2 focus:ring-indigo-400"/>
-            <button class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition">
-                ➕ Add User
-            </button>
+    <!-- Login Page Wrapper -->
+    <div id="login-wrapper" class="w-full max-w-md page active">
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-bold text-white">FitTrack</h1>
+            <p class="text-gray-400 mt-2">Welcome back! Please login to continue.</p>
+        </header>
+        <form id="login-form" class="space-y-4 bg-gray-800 p-8 rounded-lg shadow-xl">
+            <div>
+                <label for="username" class="text-sm font-medium text-gray-300">Username</label>
+                <input id="username" type="text" value="Noel" placeholder="Enter your username" class="mt-1 w-full bg-gray-700 rounded-md p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="password" class="text-sm font-medium text-gray-300">Password</label>
+                <input id="password" type="password" value="password" placeholder="••••••••" class="mt-1 w-full bg-gray-700 rounded-md p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors !mt-8">Login</button>
+            <p class="text-center text-sm text-gray-400 pt-4">
+                Don't have an account? <a href="#" class="font-medium text-blue-400 hover:underline">Sign Up</a>
+            </p>
         </form>
     </div>
 
-    <div class="bg-white shadow rounded-xl p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Users</h2>
-        <ul id="userList" class="divide-y divide-gray-200"></ul>
-    </div>
-</div>
+    <!-- Main App Wrapper -->
+    <div id="app-wrapper" class="w-full max-w-7xl h-[90vh] bg-gray-800 rounded-2xl shadow-2xl flex" style="display: none;">
+        <!-- Sidebar -->
+        <nav class="w-64 bg-gray-900/50 rounded-l-2xl p-6 flex flex-col border-r border-gray-700">
+            <h1 class="text-2xl font-bold text-white mb-10">FitTrack</h1>
+            <div class="space-y-2 flex-grow">
+                <button data-page="home-page" class="nav-btn w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg text-lg hover:bg-gray-700 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> Home</button>
+                <button data-page="history-page" class="nav-btn w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg text-lg hover:bg-gray-700 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> History</button>
+                <button data-page="profile-page" class="nav-btn w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg text-lg hover:bg-gray-700 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> Profile</button>
+            </div>
+             <button id="add-workout-session-btn" class="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>Log Session</button>
+            <button id="logout-btn" class="w-full text-left flex items-center gap-3 px-4 py-2 mt-4 rounded-lg text-gray-400 hover:bg-red-600/50 hover:text-white transition-colors"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 100 2h12a1 1 0 100-2V4a1 1 0 00-1-1H3zm10.293 9.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L9 10.414V13a1 1 0 102 0v-2.586l1.293 1.293z" clip-rule="evenodd" /></svg>Log Out</button>
+        </nav>
 
-<!-- WORKOUTS SECTION -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mt-8">
-    <div class="bg-white shadow rounded-xl p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Add Workout</h2>
-        <form id="workoutForm" class="space-y-3">
-            <input type="text" id="workoutName" placeholder="Workout Name" required
-                   class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-400"/>
-            <textarea id="workoutDesc" placeholder="Description" required
-                      class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-400"></textarea>
-            <input type="number" id="workoutDuration" placeholder="Duration (mins)" required
-                   class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-400"/>
-            <button class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition">
-                ➕ Add Workout
-            </button>
-        </form>
-    </div>
+        <!-- Main Content -->
+        <main class="flex-grow p-10 overflow-y-auto content-area">
+            <!-- Home Page -->
+            <div id="home-page" class="page">
+                <header class="mb-8"><h1 class="text-4xl font-bold">Good Morning, Noel!</h1><p class="text-gray-400 text-lg">Ready to crush your goals today?</p></header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <section id="motivation-section" class="bg-gray-700 p-6 rounded-xl flex items-center gap-6"><div class="text-5xl">🤖</div><div><p id="quote" class="font-semibold text-xl text-blue-200">The only bad workout is the one that didn't happen.</p><button id="new-quote-btn" class="text-sm text-blue-300 hover:text-blue-100 transition-colors mt-2">Get new motivation</button></div></section>
+                    <section class="bg-gray-700 p-6 rounded-xl"><h3 class="font-bold text-2xl">Featured Article: The Importance of Hydration</h3><p class="text-gray-300 mt-2">Staying hydrated is key to performance and recovery. Drinking enough water can boost your energy, improve brain function, prevent muscle cramps, and aid in nutrient absorption. Aim for at least 8-10 glasses a day, more if you're active.</p></section>
+                </div>
+            </div>
 
-    <div class="bg-white shadow rounded-xl p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Workouts</h2>
-        <ul id="workoutList" class="divide-y divide-gray-200"></ul>
+            <!-- History Page -->
+            <div id="history-page" class="page">
+                <header class="mb-8"><h1 class="text-4xl font-bold">Workout History</h1><p class="text-gray-400 text-lg">Review your past sessions.</p></header>
+                <div id="history-list-container" class="space-y-4"><p id="no-history-msg" class="text-gray-400 text-center text-lg mt-10">No workout sessions recorded yet.</p></div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profile-page" class="page">
+                <header class="mb-8"><h1 class="text-4xl font-bold">Your Profile</h1><p class="text-gray-400 text-lg">Track your progress and stats.</p></header>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-8">
+                        <section class="text-center bg-gray-700 p-6 rounded-xl"><h2 class="text-xl font-semibold text-orange-300">Workout Streak</h2><p class="text-7xl font-bold my-2">🔥 <span id="streak-count">0</span></p><p class="text-gray-400">Keep it going!</p></section>
+                        <section><h2 class="text-2xl font-semibold mb-2">BMI Calculator</h2><div class="bg-gray-700 p-6 rounded-xl space-y-3"><div class="flex gap-4"><input id="height" type="number" placeholder="Height (cm)" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"><input id="weight" type="number" placeholder="Weight (kg)" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"></div><button id="calculate-bmi-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors">Calculate BMI</button><div id="bmi-result-container" class="text-center pt-2" style="display: none;"><p class="text-gray-400">Your BMI is</p><p id="bmi-result" class="text-4xl font-bold text-green-400"></p><p id="bmi-category" class="text-lg font-semibold"></p></div></div></section>
+                    </div>
+                    <div class="space-y-8">
+                         <section><h2 class="text-2xl font-semibold mb-2">Weekly Progress</h2><div class="bg-gray-700 p-4 rounded-xl"><canvas id="weekly-progress-chart"></canvas></div></section>
+                         <section><h2 class="text-2xl font-semibold mb-2">Weight Variation</h2><div class="bg-gray-700 p-4 rounded-xl"><canvas id="weight-chart"></canvas></div></section>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Workout Session Page -->
+            <div id="log-session-page" class="page">
+                <header class="mb-8 flex items-center justify-between"><h1 class="text-4xl font-bold">Log a Workout Session</h1><button id="cancel-session-btn" class="text-lg text-gray-400 hover:text-white font-semibold">Cancel</button></header>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-700 p-6 rounded-xl"><h2 class="text-2xl font-semibold mb-4">Add an Exercise</h2><form id="exercise-form" class="space-y-4"><input id="session-title" type="text" placeholder="Session Title (e.g., Push Day)" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"><input id="exercise-name" type="text" placeholder="Exercise Name" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600"><div class="flex gap-4"><input id="exercise-sets" type="number" placeholder="Sets" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600"><input id="exercise-reps" type="number" placeholder="Reps" class="w-full bg-gray-800 rounded-md p-3 border border-gray-600"></div><button type="submit" class="w-full bg-blue-600/50 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-md transition-colors">Add Exercise</button></form></div>
+                    <div><h2 class="text-2xl font-semibold mb-4">Current Session</h2><div id="current-session-list" class="bg-gray-700 p-6 rounded-xl space-y-3 min-h-[200px]"><p id="no-exercises-msg" class="text-gray-400 text-center pt-10">No exercises added yet.</p></div><button id="save-session-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition-colors mt-6 text-lg">Save Session</button></div>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
 
 <script>
-    const API_BASE = "http://localhost:8080/api";
+    document.addEventListener('DOMContentLoaded', () => {
+        const pages = document.querySelectorAll('.page');
+        const loginWrapper = document.getElementById('login-wrapper');
+        const appWrapper = document.getElementById('app-wrapper');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const loginForm = document.getElementById('login-form');
+        const logoutBtn = document.getElementById('logout-btn');
+        const newQuoteBtn = document.getElementById('new-quote-btn');
+        const quoteEl = document.getElementById('quote');
+        const calculateBmiBtn = document.getElementById('calculate-bmi-btn');
+        const streakCountEl = document.getElementById('streak-count');
+        const historyListContainer = document.getElementById('history-list-container');
+        const noHistoryMsg = document.getElementById('no-history-msg');
+        const addWorkoutSessionBtn = document.getElementById('add-workout-session-btn');
+        const cancelSessionBtn = document.getElementById('cancel-session-btn');
+        const saveSessionBtn = document.getElementById('save-session-btn');
+        const exerciseForm = document.getElementById('exercise-form');
+        const currentSessionList = document.getElementById('current-session-list');
+        const noExercisesMsg = document.getElementById('no-exercises-msg');
 
-    // Load Users
-    async function loadUsers() {
-        const res = await fetch(`${API_BASE}/users`);
-        const users = await res.json();
-        const list = document.getElementById("userList");
-        list.innerHTML = "";
-        users.forEach(u => {
-            const li = document.createElement("li");
-            li.className = "py-2 flex justify-between items-center";
-            li.innerHTML = `<span>${u.name} (${u.email}) | BMI: ${u.bmi}</span>`;
-            list.appendChild(li);
-        });
-    }
+        let streak = 0;
+        let allWorkoutSessions = [];
+        let currentSessionExercises = [];
+        let weeklyProgressChart, weightChart;
+        let lastActivePageId = 'home-page';
+        const quotes = [ "Believe you can and you're halfway there.", "The body achieves what the mind believes.", "Success isn’t always about greatness. It’s about consistency.", "Push yourself, because no one else is going to do it for you.", "Sweat is just fat crying." ];
+        
+        function navigateTo(pageId) {
+             pages.forEach(page => page.classList.toggle('active', page.id === pageId || page.parentElement.id === pageId));
+             if (pageId.includes('-page')) {
+                 lastActivePageId = pageId;
+                 updateNavStyling(pageId);
+             }
+        }
 
-    // Load Workouts
-    async function loadWorkouts() {
-        const res = await fetch(`${API_BASE}/workouts`);
-        const workouts = await res.json();
-        const list = document.getElementById("workoutList");
-        list.innerHTML = "";
-        workouts.forEach(w => {
-            const li = document.createElement("li");
-            li.className = "py-2 flex justify-between items-center";
-            li.innerHTML = `<span>${w.name} - ${w.description} (${w.duration} min)</span>`;
-            list.appendChild(li);
-        });
-    }
+        function resetAppState() {
+            streak = 0;
+            allWorkoutSessions = [];
+            currentSessionExercises = [];
+            streakCountEl.textContent = 0;
+            renderHistory();
+            appWrapper.style.display = 'none';
+            loginWrapper.style.display = 'block';
+            navigateTo('login-wrapper');
+        }
 
-    // Add User
-    document.getElementById("userForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const user = {
-            name: document.getElementById("userName").value,
-            email: document.getElementById("userEmail").value,
-            bmi: parseFloat(document.getElementById("userBmi").value)
-        };
-        await fetch(`${API_BASE}/users`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(user)
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            loginWrapper.style.display = 'none';
+            appWrapper.style.display = 'flex';
+            navigateTo('home-page');
+            initializeCharts();
         });
-        e.target.reset();
-        loadUsers();
+
+        logoutBtn.addEventListener('click', resetAppState);
+
+        function updateNavStyling(activePageId) {
+            navButtons.forEach(btn => {
+                btn.classList.toggle('bg-blue-600', btn.dataset.page === activePageId);
+                btn.classList.toggle('text-white', btn.dataset.page === activePageId);
+                btn.classList.toggle('text-gray-400', btn.dataset.page !== activePageId);
+            });
+        }
+
+        navButtons.forEach(button => { button.addEventListener('click', () => navigateTo(button.dataset.page)); });
+        newQuoteBtn.addEventListener('click', () => { quoteEl.textContent = quotes.filter(q => q !== quoteEl.textContent)[Math.floor(Math.random() * (quotes.length - 1))]; });
+        
+        function renderHistory() {
+            noHistoryMsg.style.display = allWorkoutSessions.length === 0 ? 'block' : 'none';
+            historyListContainer.innerHTML = allWorkoutSessions.length === 0 ? '' : allWorkoutSessions.map(session => `
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <p class="text-xl font-bold">${session.title}</p>
+                    <div class="flex justify-between items-center text-md text-gray-300 mt-1">
+                        <span>${session.exercises.length} exercise${session.exercises.length > 1 ? 's' : ''}</span>
+                        <span>${session.date}</span>
+                    </div>
+                </div>`).join('');
+             if (allWorkoutSessions.length === 0) historyListContainer.appendChild(noHistoryMsg);
+        }
+        
+        calculateBmiBtn.addEventListener('click', () => {
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            if (height > 0 && weight > 0) {
+                const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+                const resultContainer = document.getElementById('bmi-result-container');
+                const bmiResultEl = document.getElementById('bmi-result');
+                const bmiCategoryEl = document.getElementById('bmi-category');
+                bmiResultEl.textContent = bmi;
+                let category, colorClass;
+                if (bmi < 18.5) { category = 'Underweight'; colorClass = 'text-yellow-400'; } 
+                else if (bmi < 24.9) { category = 'Normal weight'; colorClass = 'text-green-400'; }
+                else if (bmi < 29.9) { category = 'Overweight'; colorClass = 'text-orange-400'; }
+                else { category = 'Obesity'; colorClass = 'text-red-400'; }
+                bmiCategoryEl.textContent = category;
+                bmiResultEl.className = `text-4xl font-bold ${colorClass}`;
+                bmiCategoryEl.className = `text-lg font-semibold ${colorClass}`;
+                resultContainer.style.display = 'block';
+            }
+        });
+
+        addWorkoutSessionBtn.addEventListener('click', () => navigateTo('log-session-page'));
+        cancelSessionBtn.addEventListener('click', () => { clearSessionForm(); navigateTo(lastActivePageId); });
+        
+        exerciseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('exercise-name');
+            const setsInput = document.getElementById('exercise-sets');
+            const repsInput = document.getElementById('exercise-reps');
+            if (nameInput.value.trim() && setsInput.value > 0 && repsInput.value > 0) {
+                currentSessionExercises.push({ name: nameInput.value.trim(), sets: setsInput.value, reps: repsInput.value });
+                renderCurrentSessionExercises();
+                nameInput.value = ''; setsInput.value = ''; repsInput.value = '';
+            }
+        });
+
+        function renderCurrentSessionExercises() {
+            noExercisesMsg.style.display = currentSessionExercises.length === 0 ? 'block' : 'none';
+            currentSessionList.innerHTML = currentSessionExercises.length === 0 ? '' : currentSessionExercises.map(ex => `
+                <div class="bg-gray-800 p-3 rounded-md flex justify-between items-center">
+                    <span class="font-semibold">${ex.name}</span>
+                    <span class="text-sm text-gray-400">${ex.sets} sets &times; ${ex.reps} reps</span>
+                </div>`).join('');
+            if (currentSessionExercises.length === 0) currentSessionList.appendChild(noExercisesMsg);
+        }
+
+        saveSessionBtn.addEventListener('click', () => {
+            const title = document.getElementById('session-title').value.trim();
+            if (title && currentSessionExercises.length > 0) {
+                allWorkoutSessions.unshift({ title, exercises: [...currentSessionExercises], date: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) });
+                streak++;
+                streakCountEl.textContent = streak;
+                renderHistory();
+                clearSessionForm();
+                navigateTo(lastActivePageId);
+            } else {
+                 // Using a more modern-looking modal for alerts
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
+                modal.innerHTML = `
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-xl text-center">
+                        <p class="text-lg mb-4">Please provide a session title and add at least one exercise.</p>
+                        <button id="ok-btn" class="bg-blue-600 px-4 py-2 rounded-md">OK</button>
+                    </div>`;
+                document.body.appendChild(modal);
+                document.getElementById('ok-btn').addEventListener('click', () => modal.remove());
+            }
+        });
+
+        function clearSessionForm(){
+            ['session-title', 'exercise-name', 'exercise-sets', 'exercise-reps'].forEach(id => document.getElementById(id).value = '');
+            currentSessionExercises = [];
+            renderCurrentSessionExercises();
+        }
+
+        function initializeCharts() {
+            Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#4b5563';
+            const chartOptions = { scales: { y: { beginAtZero: true, grid: { color: '#374151' } } } };
+            if(weeklyProgressChart) weeklyProgressChart.destroy();
+            weeklyProgressChart = new Chart(document.getElementById('weekly-progress-chart').getContext('2d'), { type: 'bar', data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Workouts', data: [2, 3, 1, 4, 2, 5, 0], backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 4 }] }, options: chartOptions });
+            if(weightChart) weightChart.destroy();
+            weightChart = new Chart(document.getElementById('weight-chart').getContext('2d'), { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'], datasets: [{ label: 'Weight (kg)', data: [75, 75.2, 74.8, 75.1, 74.5], fill: false, borderColor: 'rgb(234, 179, 8)', tension: 0.1 }] }, options: chartOptions });
+        }
+        
+        navigateTo('login-wrapper'); // Start at login
     });
-
-    // Add Workout
-    document.getElementById("workoutForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const workout = {
-            name: document.getElementById("workoutName").value,
-            description: document.getElementById("workoutDesc").value,
-            duration: parseInt(document.getElementById("workoutDuration").value)
-        };
-        await fetch(`${API_BASE}/workouts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(workout)
-        });
-        e.target.reset();
-        loadWorkouts();
-    });
-
-    // Initial Load
-    loadUsers();
-    loadWorkouts();
 </script>
 
 </body>
 </html>
-

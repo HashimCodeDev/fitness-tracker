@@ -549,9 +549,23 @@
                                     <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
                                     <input name="email" type="email" readonly class="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-slate-400 focus:outline-none">
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-300 mb-2">BMI</label>
-                                    <input name="bmi" type="number" step="0.1" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Age</label>
+                                        <input name="age" type="number" min="1" max="120" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Height (cm)</label>
+                                        <input name="height" type="number" min="50" max="300" step="0.1" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Weight (kg)</label>
+                                        <input name="weight" type="number" min="20" max="500" step="0.1" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                <div id="bmi-display" class="bg-slate-800/30 rounded-xl p-4 text-center" style="display: none;">
+                                    <span class="text-slate-400">BMI: </span>
+                                    <span id="bmi-value" class="text-white font-semibold text-lg">-</span>
                                 </div>
                                 <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300">
                                     Update Profile
@@ -698,6 +712,13 @@
             // Add workout buttons
             document.getElementById('add-workout-btn')?.addEventListener('click', startWorkout);
             document.getElementById('mobile-add-workout')?.addEventListener('click', startWorkout);
+            
+            // BMI calculation listeners
+            document.addEventListener('input', function(e) {
+                if (e.target.name === 'height' || e.target.name === 'weight') {
+                    calculateBMI();
+                }
+            });
         }
 
         // Authentication
@@ -1168,17 +1189,34 @@
             
             const nameInput = profileForm.querySelector('input[name="name"]');
             const emailInput = profileForm.querySelector('input[name="email"]');
-            const bmiInput = profileForm.querySelector('input[name="bmi"]');
+            const ageInput = profileForm.querySelector('input[name="age"]');
+            const heightInput = profileForm.querySelector('input[name="height"]');
+            const weightInput = profileForm.querySelector('input[name="weight"]');
             
             if (nameInput) nameInput.value = user.name || '';
             if (emailInput) emailInput.value = user.email || '';
-            if (bmiInput) bmiInput.value = user.bmi || '';
+            if (ageInput) ageInput.value = user.age || '';
+            if (heightInput) heightInput.value = user.height || '';
+            if (weightInput) weightInput.value = user.weight || '';
             
             // Update profile display
             const profileName = document.getElementById('profile-display-name');
             const profileEmail = document.getElementById('profile-display-email');
             if (profileName) profileName.textContent = user.name || user.email;
             if (profileEmail) profileEmail.textContent = user.email || '';
+            
+            // Show BMI if available
+            if (user.bmi) {
+                const bmiDisplay = document.getElementById('bmi-display');
+                const bmiValue = document.getElementById('bmi-value');
+                if (bmiDisplay && bmiValue) {
+                    bmiDisplay.style.display = 'block';
+                    bmiValue.textContent = user.bmi.toFixed(1);
+                }
+            }
+            
+            // Update currentUser with latest data
+            currentUser = { ...currentUser, ...user };
             
             // Update stats
             loadProfileStats();
@@ -1209,13 +1247,15 @@
             
             const formData = new FormData(e.target);
             const name = formData.get('name');
-            const bmi = parseFloat(formData.get('bmi')) || 0;
+            const age = parseInt(formData.get('age')) || null;
+            const height = parseFloat(formData.get('height')) || null;
+            const weight = parseFloat(formData.get('weight')) || null;
             
             try {
                 const response = await fetch(`/api/users/profile?email=${encodeURIComponent(currentUser.email)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, bmi })
+                    body: JSON.stringify({ name, age, height, weight })
                 });
                 
                 if (response.ok) {
@@ -1262,6 +1302,27 @@
                     new Date(summary.oldestWorkout).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 
                     new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
                 statItems[3].querySelector('.font-semibold').textContent = memberSince;
+            }
+        }
+        
+        function calculateBMI() {
+            const heightInput = document.querySelector('input[name="height"]');
+            const weightInput = document.querySelector('input[name="weight"]');
+            const bmiDisplay = document.getElementById('bmi-display');
+            const bmiValue = document.getElementById('bmi-value');
+            
+            if (heightInput && weightInput && bmiDisplay && bmiValue) {
+                const height = parseFloat(heightInput.value);
+                const weight = parseFloat(weightInput.value);
+                
+                if (height > 0 && weight > 0) {
+                    const heightInMeters = height / 100;
+                    const bmi = weight / (heightInMeters * heightInMeters);
+                    bmiDisplay.style.display = 'block';
+                    bmiValue.textContent = bmi.toFixed(1);
+                } else {
+                    bmiDisplay.style.display = 'none';
+                }
             }
         }
         

@@ -29,18 +29,16 @@ public class UserController {
         if (user == null) return ResponseEntity.notFound().build();
         
         if (updatedUser.getName() != null) user.setName(updatedUser.getName());
-        if (updatedUser.getBmi() > 0) user.setBmi(updatedUser.getBmi());
+        if (updatedUser.getAge() != null) user.setAge(updatedUser.getAge());
+        if (updatedUser.getHeight() != null) user.setHeight(updatedUser.getHeight());
+        if (updatedUser.getWeight() != null) user.setWeight(updatedUser.getWeight());
+        
+        user.calculateBmi();
         
         User saved = userRepository.save(user);
         saved.setPassword(null);
         return ResponseEntity.ok(saved);
     }
 
-    @PutMapping("/bmi")
-    public ResponseEntity<User> updateBMI(@RequestParam String email, @RequestParam double bmi) {
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) return ResponseEntity.notFound().build();
-        user.setBmi(bmi);
-        return ResponseEntity.ok(userRepository.save(user));
-    }
+
 }

@@ -241,7 +241,7 @@
 
     <!-- Login/Register Page -->
     <div id="auth-wrapper" class="min-h-screen flex items-center justify-center p-4 page active">
-        <div class="w-full max-w-md">
+        <div class="w-full max-w-md mx-auto">
             <!-- Logo Section -->
             <div class="text-center mb-8 animate-bounce-in">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-4">
@@ -939,9 +939,23 @@
         async function handleRegister(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const name = formData.get('name') || e.target.querySelector('input[type="text"]').value;
-            const email = formData.get('email') || e.target.querySelector('input[type="email"]').value;
-            const password = formData.get('password') || e.target.querySelector('input[type="password"]').value;
+            const name = formData.get('name')?.trim();
+            const email = formData.get('email')?.trim();
+            const password = formData.get('password');
+            
+            // Client-side validation
+            if (!name || name.length < 2) {
+                alert('Please enter a valid name (at least 2 characters)');
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            if (!password || password.length < 6) {
+                alert('Password must be at least 6 characters long');
+                return;
+            }
             
             try {
                 const response = await fetch('/api/auth/register', {
@@ -953,13 +967,15 @@
                 if (response.ok) {
                     alert('Registration successful! Please login.');
                     showLoginBtn.click();
+                    // Clear form
+                    e.target.reset();
                 } else {
                     const error = await response.text();
-                    alert(error);
+                    alert('Registration failed: ' + error);
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                alert('Registration failed');
+                alert('Registration failed: ' + error.message);
             }
         }
 

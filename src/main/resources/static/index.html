@@ -96,7 +96,14 @@
 
             <!-- History Page -->
             <div id="history-page" class="page">
-                <header class="mb-8"><h1 class="text-4xl font-bold">Workout History</h1><p class="text-gray-400 text-lg">Review your past sessions.</p></header>
+                <header class="mb-8">
+                    <h1 class="text-4xl font-bold">Workout History</h1>
+                    <p class="text-gray-400 text-lg">Review your past sessions.</p>
+                    <div class="flex gap-4 mt-4">
+                        <button id="load-more-history" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm">Load More</button>
+                        <button id="refresh-history" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-md text-sm">Refresh</button>
+                    </div>
+                </header>
                 <div id="history-list-container" class="space-y-4"><p id="no-history-msg" class="text-gray-400 text-center text-lg mt-10">No workout sessions recorded yet.</p></div>
             </div>
 
@@ -146,12 +153,16 @@
         const exerciseForm = document.getElementById('exercise-form');
         const currentSessionList = document.getElementById('current-session-list');
         const noExercisesMsg = document.getElementById('no-exercises-msg');
+        const loadMoreHistoryBtn = document.getElementById('load-more-history');
+        const refreshHistoryBtn = document.getElementById('refresh-history');
 
         let streak = 0;
         let allWorkoutSessions = [];
         let currentSessionExercises = [];
         let weeklyProgressChart, weightChart;
         let lastActivePageId = 'home-page';
+        let currentHistoryPage = 0;
+        let hasMoreHistory = true;
         const quotes = [ "Believe you can and you're halfway there.", "The body achieves what the mind believes.", "Success isn’t always about greatness. It’s about consistency.", "Push yourself, because no one else is going to do it for you.", "Sweat is just fat crying." ];
         
         function navigateTo(pageId) {
@@ -278,36 +289,166 @@
         navButtons.forEach(button => { button.addEventListener('click', () => navigateTo(button.dataset.page)); });
         newQuoteBtn.addEventListener('click', () => { quoteEl.textContent = quotes.filter(q => q !== quoteEl.textContent)[Math.floor(Math.random() * (quotes.length - 1))]; });
         
+        loadMoreHistoryBtn.addEventListener('click', loadMoreWorkoutHistory);
+        refreshHistoryBtn.addEventListener('click', () => {
+            currentHistoryPage = 0;
+            hasMoreHistory = true;
+            loadWorkoutHistory();
+        });
+        
         async function loadWorkoutHistory() {
             if (!currentUser) return;
             try {
-                const response = await fetch(`/api/workouts?email=${currentUser.email}`);
+                const response = await fetch(`/api/workout-history?email=${currentUser.email}&page=${currentHistoryPage}&size=10`);
                 if (response.ok) {
-                    allWorkoutSessions = await response.json();
-                    streak = allWorkoutSessions.length;
+                    const data = await response.json();
+                    if (currentHistoryPage === 0) {
+                        allWorkoutSessions = data.workouts || [];
+                    } else {
+                        allWorkoutSessions = [...allWorkoutSessions, ...(data.workouts || [])];
+                    }
+                    hasMoreHistory = data.currentPage < data.totalPages - 1;
+                    loadMoreHistoryBtn.style.display = hasMoreHistory ? 'block' : 'none';
+                    streak = data.totalElements || allWorkoutSessions.length;
                     streakCountEl.textContent = streak;
                     renderHistory();
+                    loadWorkoutSummary();
                 }
             } catch (error) {
                 console.error('Failed to load workout history:', error);
             }
         }
         
+        async function loadMoreWorkoutHistory() {
+            if (!hasMoreHistory || !currentUser) return;
+            currentHistoryPage++;
+            await loadWorkoutHistory();
+        }
+        
+        async function loadWorkoutSummary() {
+            if (!currentUser) return;
+            try {
+                const response = await fetch(`/api/workout-history/summary?email=${currentUser.email}`);
+                if (response.ok) {
+                    const summary = await response.json();
+                    streakCountEl.textContent = summary.totalWorkouts;
+                    updateWeeklyChart(summary.averageWorkoutsPerWeek);
+                }
+            } catch (error) {
+                console.error('Failed to load workout summary:', error);
+            }
+        }
+        
+        async function deleteWorkout(workoutId) {
+            if (!currentUser) return;
+            try {
+                const response = await fetch(`/api/workout-history/${workoutId}?email=${currentUser.email}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    await loadWorkoutHistory();
+                    showAlert('Workout deleted successfully!');
+                } else {
+                    showAlert('Failed to delete workout.');
+                }
+            } catch (error) {
+                showAlert('Failed to delete workout.');
+            }
+        }
+        
         function renderHistory() {
             noHistoryMsg.style.display = allWorkoutSessions.length === 0 ? 'block' : 'none';
             historyListContainer.innerHTML = allWorkoutSessions.length === 0 ? '' : allWorkoutSessions.map(session => `
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <p class="text-xl font-bold">${session.title}</p>
-                    <div class="flex justify-between items-center text-md text-gray-300 mt-1">
-                        <span>${session.exercises.length} exercise${session.exercises.length > 1 ? 's' : ''}</span>
-                        <span>${new Date(session.date).toLocaleDateString()}</span>
+                <div class="bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors" onclick="openWorkoutDetail(${session.id})">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                            <p class="text-xl font-bold">${session.title}</p>
+                            <div class="flex justify-between items-center text-md text-gray-300 mt-1">
+                                <span>${session.exercises?.length || 0} exercise${(session.exercises?.length || 0) > 1 ? 's' : ''}</span>
+                                <span>${new Date(session.date).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <button onclick="event.stopPropagation(); deleteWorkout(${session.id})" class="text-red-400 hover:text-red-300 ml-4 p-1">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 102 0v3a1 1 0 11-2 0V9zm4 0a1 1 0 10-2 0v3a1 1 0 102 0V9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
                     </div>
                     <div class="mt-2 space-y-1">
-                        ${session.exercises.map(ex => `<div class="text-sm text-gray-400">${ex.name}: ${ex.sets} sets × ${ex.reps} reps</div>`).join('')}
+                        ${(session.exercises || []).slice(0, 3).map(ex => `<div class="text-sm text-gray-400">${ex.name}: ${ex.sets} sets × ${ex.reps} reps</div>`).join('')}
+                        ${(session.exercises?.length || 0) > 3 ? `<div class="text-sm text-gray-500">+${(session.exercises?.length || 0) - 3} more exercises...</div>` : ''}
                     </div>
                 </div>`).join('');
              if (allWorkoutSessions.length === 0) historyListContainer.appendChild(noHistoryMsg);
         }
+        
+        function updateWeeklyChart(avgWorkouts) {
+            if (weeklyProgressChart && avgWorkouts) {
+                const weeklyData = Array(7).fill(0).map(() => Math.floor(Math.random() * avgWorkouts * 2));
+                weeklyProgressChart.data.datasets[0].data = weeklyData;
+                weeklyProgressChart.update();
+            }
+        }
+        
+        async function openWorkoutDetail(workoutId) {
+            if (!currentUser) return;
+            try {
+                const response = await fetch(`/api/workout-history/${workoutId}?email=${currentUser.email}`);
+                if (response.ok) {
+                    const workout = await response.json();
+                    showWorkoutModal(workout);
+                } else {
+                    showAlert('Failed to load workout details.');
+                }
+            } catch (error) {
+                showAlert('Failed to load workout details.');
+            }
+        }
+        
+        function showWorkoutModal(workout) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="p-6 border-b border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-2xl font-bold">${workout.title}</h2>
+                            <button id="close-modal" class="text-gray-400 hover:text-white">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-gray-400 mt-2">${new Date(workout.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-4">Exercises (${workout.exercises?.length || 0})</h3>
+                        <div class="space-y-4">
+                            ${(workout.exercises || []).map((exercise, index) => `
+                                <div class="bg-gray-700 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-semibold text-lg">${exercise.name}</h4>
+                                        <span class="text-sm text-gray-400">#${index + 1}</span>
+                                    </div>
+                                    <div class="mt-2 flex gap-4 text-sm text-gray-300">
+                                        <span><strong>Sets:</strong> ${exercise.sets}</span>
+                                        <span><strong>Reps:</strong> ${exercise.reps}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${(workout.exercises?.length || 0) === 0 ? '<p class="text-gray-400 text-center py-8">No exercises recorded for this session.</p>' : ''}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('close-modal').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+        
+        // Make functions available globally
+        window.deleteWorkout = deleteWorkout;
+        window.openWorkoutDetail = openWorkoutDetail;
         
         calculateBmiBtn.addEventListener('click', async () => {
             const height = parseFloat(document.getElementById('height').value);

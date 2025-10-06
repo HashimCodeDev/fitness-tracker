@@ -1,5 +1,6 @@
 package com.example.fitnesstracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,5 +17,6 @@ public class Exercise {
     
     @ManyToOne
     @JoinColumn(name = "workout_id")
+    @JsonIgnore
     private Workout workout;
 }

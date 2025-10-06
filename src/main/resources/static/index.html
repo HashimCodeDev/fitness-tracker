@@ -152,6 +152,89 @@
         .toast.show {
             transform: translateX(0);
         }
+        
+        /* Workout Modal Styles */
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        /* Exercise Row Animations */
+        .exercise-row {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        /* Hover effects for workout cards */
+        .workout-card {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .workout-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        /* Template card hover effects */
+        .template-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .template-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .template-card:hover::before {
+            left: 100%;
+        }
+        
+        /* Form input focus effects */
+        .form-input {
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Button loading state */
+        .btn-loading {
+            position: relative;
+            color: transparent;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
@@ -413,51 +496,114 @@
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
                         <div>
                             <h1 class="text-3xl lg:text-4xl font-bold text-white mb-2">Workouts</h1>
-                            <p class="text-slate-400">Track your exercises and progress</p>
+                            <p class="text-slate-400">Create and track your workout sessions</p>
+                            <p class="text-slate-500 text-xs mt-1 hidden sm:block">
+                                <i class="fas fa-keyboard text-xs mr-1"></i>
+                                Tip: Press Ctrl+N to create a new workout
+                            </p>
                         </div>
-                        <button class="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-plus mr-2"></i>Start Workout
+                        <button id="create-workout-btn" class="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Create Workout
                         </button>
                     </div>
 
-                    <!-- Workout Categories -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer">
-                            <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4">
-                                <i class="fas fa-dumbbell text-2xl text-white"></i>
+                    <!-- Workout Templates -->
+                    <div class="mb-8">
+                        <h2 class="text-xl font-semibold text-white mb-4">Quick Start Templates</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer template-card" onclick="createFromTemplate('strength')">
+                                <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-dumbbell text-2xl text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Strength Training</h3>
+                                <p class="text-slate-400 mb-4">Build muscle with compound movements</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-500">5 exercises</span>
+                                    <i class="fas fa-arrow-right text-blue-400"></i>
+                                </div>
                             </div>
-                            <h3 class="text-xl font-semibold text-white mb-2">Strength Training</h3>
-                            <p class="text-slate-400 mb-4">Build muscle and increase strength with targeted exercises</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-slate-500">12 exercises</span>
-                                <i class="fas fa-arrow-right text-blue-400"></i>
-                            </div>
-                        </div>
 
-                        <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer">
-                            <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                                <i class="fas fa-running text-2xl text-white"></i>
+                            <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer template-card" onclick="createFromTemplate('cardio')">
+                                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-running text-2xl text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Cardio Blast</h3>
+                                <p class="text-slate-400 mb-4">High-intensity cardiovascular workout</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-500">6 exercises</span>
+                                    <i class="fas fa-arrow-right text-blue-400"></i>
+                                </div>
                             </div>
-                            <h3 class="text-xl font-semibold text-white mb-2">Cardio</h3>
-                            <p class="text-slate-400 mb-4">Improve cardiovascular health and burn calories</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-slate-500">8 exercises</span>
-                                <i class="fas fa-arrow-right text-blue-400"></i>
-                            </div>
-                        </div>
 
-                        <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer">
-                            <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                                <i class="fas fa-leaf text-2xl text-white"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-white mb-2">Flexibility</h3>
-                            <p class="text-slate-400 mb-4">Enhance mobility and prevent injuries</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-slate-500">15 exercises</span>
-                                <i class="fas fa-arrow-right text-blue-400"></i>
+                            <div class="glass-effect rounded-2xl p-6 card-hover cursor-pointer template-card" onclick="createFromTemplate('flexibility')">
+                                <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+                                    <i class="fas fa-leaf text-2xl text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Flexibility & Mobility</h3>
+                                <p class="text-slate-400 mb-4">Improve range of motion and recovery</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-500">8 exercises</span>
+                                    <i class="fas fa-arrow-right text-blue-400"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Recent Workouts -->
+                    <div class="glass-effect rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-white">Recent Workouts</h2>
+                            <button onclick="loadWorkouts()" class="text-blue-400 hover:text-blue-300 text-sm">
+                                <i class="fas fa-refresh mr-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div id="recent-workouts" class="space-y-4">
+                            <div class="text-center py-8 text-slate-400">
+                                <i class="fas fa-dumbbell text-4xl mb-4 opacity-50"></i>
+                                <p>No workouts yet. Create your first workout!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout Creation Modal -->
+            <div id="workout-modal" class="fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4" style="display: none;">
+                <div class="glass-effect rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar modal-content">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-white">Create Workout</h2>
+                        <button id="close-modal" class="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700/50 rounded-lg">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <form id="workout-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Workout Title</label>
+                            <input id="workout-title" type="text" class="form-input w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter workout title" required>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <label class="text-sm font-medium text-slate-300">Exercises</label>
+                                <button type="button" id="add-exercise" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-all transform hover:scale-105">
+                                    <i class="fas fa-plus mr-1"></i>Add Exercise
+                                </button>
+                            </div>
+                            <div id="exercises-container" class="space-y-4">
+                                <!-- Exercises will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 pt-4 border-t border-slate-700">
+                            <button type="button" id="cancel-workout" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-105">
+                                Cancel
+                            </button>
+                            <button type="submit" id="save-workout-btn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-105">
+                                <i class="fas fa-save mr-2"></i>Save Workout
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -713,10 +859,42 @@
             document.getElementById('add-workout-btn')?.addEventListener('click', startWorkout);
             document.getElementById('mobile-add-workout')?.addEventListener('click', startWorkout);
             
+            // Setup workout-specific event listeners
+            setupWorkoutEventListeners();
+            
             // BMI calculation listeners
             document.addEventListener('input', function(e) {
                 if (e.target.name === 'height' || e.target.name === 'weight') {
                     calculateBMI();
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape key to close modal
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('workout-modal');
+                    if (modal && modal.style.display !== 'none') {
+                        closeWorkoutModal();
+                    }
+                }
+                
+                // Ctrl/Cmd + N to create new workout
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n' && currentPage === 'workouts-page') {
+                    e.preventDefault();
+                    openWorkoutModal();
+                }
+                
+                // Ctrl/Cmd + S to save workout (when modal is open)
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    const modal = document.getElementById('workout-modal');
+                    if (modal && modal.style.display !== 'none') {
+                        e.preventDefault();
+                        const form = document.getElementById('workout-form');
+                        if (form) {
+                            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        }
+                    }
                 }
             });
         }
@@ -830,6 +1008,8 @@
                 loadWorkoutHistory();
             } else if (pageId === 'profile-page') {
                 loadUserProfile();
+            } else if (pageId === 'workouts-page') {
+                loadWorkouts();
             }
             
             // Hide mobile menu
@@ -1116,32 +1296,239 @@
         }
 
         // Workout Functions
-        async function startWorkout() {
+        let exerciseCounter = 0;
+        
+        const workoutTemplates = {
+            strength: {
+                title: 'Strength Training Session',
+                exercises: [
+                    { name: 'Bench Press', sets: 3, reps: 10 },
+                    { name: 'Squats', sets: 3, reps: 12 },
+                    { name: 'Deadlifts', sets: 3, reps: 8 },
+                    { name: 'Pull-ups', sets: 3, reps: 8 },
+                    { name: 'Overhead Press', sets: 3, reps: 10 }
+                ]
+            },
+            cardio: {
+                title: 'Cardio Blast Workout',
+                exercises: [
+                    { name: 'Jumping Jacks', sets: 3, reps: 30 },
+                    { name: 'Burpees', sets: 3, reps: 15 },
+                    { name: 'Mountain Climbers', sets: 3, reps: 20 },
+                    { name: 'High Knees', sets: 3, reps: 30 },
+                    { name: 'Plank Jacks', sets: 3, reps: 20 },
+                    { name: 'Jump Squats', sets: 3, reps: 15 }
+                ]
+            },
+            flexibility: {
+                title: 'Flexibility & Mobility Session',
+                exercises: [
+                    { name: 'Cat-Cow Stretch', sets: 2, reps: 10 },
+                    { name: 'Downward Dog', sets: 2, reps: 5 },
+                    { name: 'Hip Flexor Stretch', sets: 2, reps: 8 },
+                    { name: 'Shoulder Rolls', sets: 2, reps: 10 },
+                    { name: 'Hamstring Stretch', sets: 2, reps: 6 },
+                    { name: 'Spinal Twist', sets: 2, reps: 8 },
+                    { name: 'Child\'s Pose', sets: 1, reps: 3 },
+                    { name: 'Pigeon Pose', sets: 2, reps: 4 }
+                ]
+            }
+        };
+        
+        function setupWorkoutEventListeners() {
+            const createWorkoutBtn = document.getElementById('create-workout-btn');
+            const workoutModal = document.getElementById('workout-modal');
+            const closeModal = document.getElementById('close-modal');
+            const cancelWorkout = document.getElementById('cancel-workout');
+            const addExerciseBtn = document.getElementById('add-exercise');
+            const workoutForm = document.getElementById('workout-form');
+            
+            if (createWorkoutBtn) {
+                createWorkoutBtn.addEventListener('click', openWorkoutModal);
+            }
+            
+            if (closeModal) {
+                closeModal.addEventListener('click', closeWorkoutModal);
+            }
+            
+            if (cancelWorkout) {
+                cancelWorkout.addEventListener('click', closeWorkoutModal);
+            }
+            
+            if (addExerciseBtn) {
+                addExerciseBtn.addEventListener('click', addExerciseRow);
+            }
+            
+            if (workoutForm) {
+                workoutForm.addEventListener('submit', saveWorkout);
+            }
+            
+            // Close modal on backdrop click
+            if (workoutModal) {
+                workoutModal.addEventListener('click', (e) => {
+                    if (e.target === workoutModal) {
+                        closeWorkoutModal();
+                    }
+                });
+            }
+        }
+        
+        function openWorkoutModal() {
             if (!currentUser?.email) {
                 alert('Please login first');
                 return;
             }
             
-            const title = prompt('Enter workout title:');
-            if (!title) return;
+            const modal = document.getElementById('workout-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                resetWorkoutForm();
+                addExerciseRow(); // Add first exercise row
+            }
+        }
+        
+        function closeWorkoutModal() {
+            const modal = document.getElementById('workout-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                resetWorkoutForm();
+            }
+        }
+        
+        function resetWorkoutForm() {
+            const titleInput = document.getElementById('workout-title');
+            const exercisesContainer = document.getElementById('exercises-container');
             
+            if (titleInput) titleInput.value = '';
+            if (exercisesContainer) exercisesContainer.innerHTML = '';
+            exerciseCounter = 0;
+        }
+        
+        function addExerciseRow(exercise = null) {
+            const container = document.getElementById('exercises-container');
+            if (!container) return;
+            
+            const exerciseId = ++exerciseCounter;
+            const exerciseRow = document.createElement('div');
+            exerciseRow.className = 'bg-slate-800/30 rounded-xl p-4 space-y-4 exercise-row border border-slate-700/50 hover:border-slate-600/50 transition-all';
+            exerciseRow.id = `exercise-${exerciseId}`;
+            
+            exerciseRow.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <h4 class="text-white font-medium flex items-center gap-2">
+                        <i class="fas fa-dumbbell text-blue-400 text-sm"></i>
+                        Exercise ${exerciseId}
+                    </h4>
+                    <button type="button" onclick="removeExercise(${exerciseId})" class="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/10 rounded-lg transition-all">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-1">
+                        <label class="block text-sm text-slate-300 mb-2">Exercise Name</label>
+                        <input type="text" name="exercise-name-${exerciseId}" class="form-input w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Push-ups" value="${exercise?.name || ''}" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-2">Sets</label>
+                        <input type="number" name="exercise-sets-${exerciseId}" min="1" max="20" class="form-input w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${exercise?.sets || 3}" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-2">Reps</label>
+                        <input type="number" name="exercise-reps-${exerciseId}" min="1" max="100" class="form-input w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="${exercise?.reps || 10}" required>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(exerciseRow);
+        }
+        
+        function removeExercise(exerciseId) {
+            const exerciseRow = document.getElementById(`exercise-${exerciseId}`);
+            if (exerciseRow) {
+                exerciseRow.remove();
+            }
+        }
+        
+        function createFromTemplate(templateType) {
+            if (!currentUser?.email) {
+                alert('Please login first');
+                return;
+            }
+            
+            const template = workoutTemplates[templateType];
+            if (!template) return;
+            
+            openWorkoutModal();
+            
+            // Set title
+            const titleInput = document.getElementById('workout-title');
+            if (titleInput) {
+                titleInput.value = template.title;
+            }
+            
+            // Clear existing exercises and add template exercises
+            const container = document.getElementById('exercises-container');
+            if (container) {
+                container.innerHTML = '';
+                exerciseCounter = 0;
+                
+                template.exercises.forEach(exercise => {
+                    addExerciseRow(exercise);
+                });
+            }
+        }
+        
+        async function saveWorkout(e) {
+            e.preventDefault();
+            
+            if (!currentUser?.email) {
+                showToast('Please login first', 'error');
+                return;
+            }
+            
+            const titleInput = document.getElementById('workout-title');
+            const title = titleInput?.value?.trim();
+            
+            if (!title) {
+                showToast('Please enter a workout title', 'error');
+                titleInput?.focus();
+                return;
+            }
+            
+            // Collect exercises
             const exercises = [];
-            let addMore = true;
+            const container = document.getElementById('exercises-container');
             
-            while (addMore) {
-                const exerciseName = prompt('Enter exercise name:');
-                if (!exerciseName) break;
+            if (container) {
+                const exerciseRows = container.querySelectorAll('[id^="exercise-"]');
                 
-                const sets = parseInt(prompt('Enter number of sets:')) || 1;
-                const reps = parseInt(prompt('Enter number of reps:')) || 1;
-                
-                exercises.push({ name: exerciseName, sets, reps });
-                addMore = confirm('Add another exercise?');
+                exerciseRows.forEach(row => {
+                    const nameInput = row.querySelector('[name^="exercise-name-"]');
+                    const setsInput = row.querySelector('[name^="exercise-sets-"]');
+                    const repsInput = row.querySelector('[name^="exercise-reps-"]');
+                    
+                    const name = nameInput?.value?.trim();
+                    const sets = parseInt(setsInput?.value) || 0;
+                    const reps = parseInt(repsInput?.value) || 0;
+                    
+                    if (name && sets > 0 && reps > 0) {
+                        exercises.push({ name, sets, reps });
+                    }
+                });
             }
             
             if (exercises.length === 0) {
-                alert('No exercises added!');
+                showToast('Please add at least one exercise', 'error');
                 return;
+            }
+            
+            // Show loading state
+            const saveBtn = document.getElementById('save-workout-btn');
+            const originalText = saveBtn?.innerHTML;
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('btn-loading');
+                saveBtn.innerHTML = 'Saving...';
             }
             
             try {
@@ -1152,20 +1539,96 @@
                 });
                 
                 if (response.ok) {
-                    alert('Workout saved successfully! 💪');
+                    closeWorkoutModal();
+                    showToast('Workout saved successfully! 💪');
                     await loadDashboardData();
+                    if (currentPage === 'workouts-page') {
+                        await loadWorkouts();
+                    }
                     if (currentPage === 'history-page') {
                         await loadWorkoutHistory();
                     }
                 } else {
                     const errorText = await response.text();
                     console.error('Workout save error:', errorText);
-                    alert('Failed to save workout: ' + errorText);
+                    showToast('Failed to save workout: ' + errorText, 'error');
                 }
             } catch (error) {
                 console.error('Error saving workout:', error);
-                alert('Failed to save workout: ' + error.message);
+                showToast('Failed to save workout: ' + error.message, 'error');
+            } finally {
+                // Reset button state
+                if (saveBtn && originalText) {
+                    saveBtn.disabled = false;
+                    saveBtn.classList.remove('btn-loading');
+                    saveBtn.innerHTML = originalText;
+                }
             }
+        }
+        
+        async function loadWorkouts() {
+            if (!currentUser?.email) return;
+            
+            try {
+                const response = await fetch(`/api/workouts?email=${encodeURIComponent(currentUser.email)}`);
+                if (response.ok) {
+                    const workouts = await response.json();
+                    displayRecentWorkouts(workouts);
+                }
+            } catch (error) {
+                console.error('Error loading workouts:', error);
+            }
+        }
+        
+        function displayRecentWorkouts(workouts) {
+            const container = document.getElementById('recent-workouts');
+            if (!container) return;
+            
+            if (!workouts || workouts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-dumbbell text-4xl mb-4 opacity-50"></i>
+                        <p>No workouts yet. Create your first workout!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show only the 5 most recent workouts
+            const recentWorkouts = workouts.slice(0, 5);
+            
+            container.innerHTML = recentWorkouts.map(workout => {
+                const date = new Date(workout.date).toLocaleDateString();
+                const exerciseCount = workout.exercises?.length || 0;
+                const totalSets = workout.exercises?.reduce((sum, ex) => sum + ex.sets, 0) || 0;
+                
+                return `
+                    <div class="group flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl card-hover workout-card border border-slate-700/50">
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-dumbbell text-blue-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-white font-medium">${workout.title}</h4>
+                            <p class="text-slate-400 text-sm">${exerciseCount} exercises • ${totalSets} total sets</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-white text-sm">${date}</p>
+                            <p class="text-green-400 text-sm flex items-center gap-1">
+                                <i class="fas fa-check-circle text-xs"></i>
+                                Completed
+                            </p>
+                        </div>
+                        <button onclick="deleteWorkout(${workout.id})" class="text-red-400 hover:text-red-300 p-2 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/10 rounded-lg">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Legacy function for backward compatibility
+        async function startWorkout() {
+            openWorkoutModal();
         }
 
         // Profile Functions

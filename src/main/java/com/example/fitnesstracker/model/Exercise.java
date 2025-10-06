@@ -5,12 +5,16 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "admins")
-public class Admin {
+public class Exercise {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String username;
-    private String password;
+    
+    private String name;
+    private int sets;
+    private int reps;
+    
+    @ManyToOne
+    @JoinColumn(name = "workout_id")
+    private Workout workout;
 }

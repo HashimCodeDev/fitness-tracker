@@ -177,6 +177,8 @@
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
         
+        let currentUser = null;
+        
         // Toggle between login and register forms
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -206,10 +208,13 @@
                 });
                 
                 if (response.ok) {
+                    currentUser = { email };
+                    document.querySelector('#home-page h1').textContent = `Good Morning, ${email.split('@')[0]}!`;
                     loginWrapper.style.display = 'none';
                     appWrapper.style.display = 'flex';
                     navigateTo('home-page');
                     initializeCharts();
+                    loadWorkoutHistory();
                 } else {
                     const error = await response.text();
                     showAlert(error);
@@ -273,6 +278,21 @@
         navButtons.forEach(button => { button.addEventListener('click', () => navigateTo(button.dataset.page)); });
         newQuoteBtn.addEventListener('click', () => { quoteEl.textContent = quotes.filter(q => q !== quoteEl.textContent)[Math.floor(Math.random() * (quotes.length - 1))]; });
         
+        async function loadWorkoutHistory() {
+            if (!currentUser) return;
+            try {
+                const response = await fetch(`/api/workouts?email=${currentUser.email}`);
+                if (response.ok) {
+                    allWorkoutSessions = await response.json();
+                    streak = allWorkoutSessions.length;
+                    streakCountEl.textContent = streak;
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Failed to load workout history:', error);
+            }
+        }
+        
         function renderHistory() {
             noHistoryMsg.style.display = allWorkoutSessions.length === 0 ? 'block' : 'none';
             historyListContainer.innerHTML = allWorkoutSessions.length === 0 ? '' : allWorkoutSessions.map(session => `
@@ -280,16 +300,19 @@
                     <p class="text-xl font-bold">${session.title}</p>
                     <div class="flex justify-between items-center text-md text-gray-300 mt-1">
                         <span>${session.exercises.length} exercise${session.exercises.length > 1 ? 's' : ''}</span>
-                        <span>${session.date}</span>
+                        <span>${new Date(session.date).toLocaleDateString()}</span>
+                    </div>
+                    <div class="mt-2 space-y-1">
+                        ${session.exercises.map(ex => `<div class="text-sm text-gray-400">${ex.name}: ${ex.sets} sets × ${ex.reps} reps</div>`).join('')}
                     </div>
                 </div>`).join('');
              if (allWorkoutSessions.length === 0) historyListContainer.appendChild(noHistoryMsg);
         }
         
-        calculateBmiBtn.addEventListener('click', () => {
+        calculateBmiBtn.addEventListener('click', async () => {
             const height = parseFloat(document.getElementById('height').value);
             const weight = parseFloat(document.getElementById('weight').value);
-            if (height > 0 && weight > 0) {
+            if (height > 0 && weight > 0 && currentUser) {
                 const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
                 const resultContainer = document.getElementById('bmi-result-container');
                 const bmiResultEl = document.getElementById('bmi-result');
@@ -304,6 +327,15 @@
                 bmiResultEl.className = `text-4xl font-bold ${colorClass}`;
                 bmiCategoryEl.className = `text-lg font-semibold ${colorClass}`;
                 resultContainer.style.display = 'block';
+                
+                // Save BMI to backend
+                try {
+                    await fetch(`/api/users/bmi?email=${currentUser.email}&bmi=${bmi}`, {
+                        method: 'PUT'
+                    });
+                } catch (error) {
+                    console.error('Failed to save BMI:', error);
+                }
             }
         });
 
@@ -332,26 +364,32 @@
             if (currentSessionExercises.length === 0) currentSessionList.appendChild(noExercisesMsg);
         }
 
-        saveSessionBtn.addEventListener('click', () => {
+        saveSessionBtn.addEventListener('click', async () => {
             const title = document.getElementById('session-title').value.trim();
-            if (title && currentSessionExercises.length > 0) {
-                allWorkoutSessions.unshift({ title, exercises: [...currentSessionExercises], date: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) });
-                streak++;
-                streakCountEl.textContent = streak;
-                renderHistory();
-                clearSessionForm();
-                navigateTo(lastActivePageId);
+            if (title && currentSessionExercises.length > 0 && currentUser) {
+                try {
+                    const response = await fetch(`/api/workouts?email=${currentUser.email}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title,
+                            exercises: currentSessionExercises
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        await loadWorkoutHistory();
+                        clearSessionForm();
+                        navigateTo(lastActivePageId);
+                        showAlert('Workout session saved successfully!');
+                    } else {
+                        showAlert('Failed to save workout session.');
+                    }
+                } catch (error) {
+                    showAlert('Failed to save workout session.');
+                }
             } else {
-                 // Using a more modern-looking modal for alerts
-                const modal = document.createElement('div');
-                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
-                modal.innerHTML = `
-                    <div class="bg-gray-800 p-6 rounded-lg shadow-xl text-center">
-                        <p class="text-lg mb-4">Please provide a session title and add at least one exercise.</p>
-                        <button id="ok-btn" class="bg-blue-600 px-4 py-2 rounded-md">OK</button>
-                    </div>`;
-                document.body.appendChild(modal);
-                document.getElementById('ok-btn').addEventListener('click', () => modal.remove());
+                showAlert('Please provide a session title and add at least one exercise.');
             }
         });
 

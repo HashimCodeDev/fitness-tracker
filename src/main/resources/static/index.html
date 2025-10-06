@@ -138,6 +138,20 @@
             max-height: 300px !important;
             max-width: 100% !important;
         }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
@@ -526,38 +540,26 @@
                         <!-- Profile Info -->
                         <div class="lg:col-span-2 glass-effect rounded-2xl p-6">
                             <h3 class="text-xl font-semibold text-white mb-6">Personal Information</h3>
-                            <form class="space-y-6">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-300 mb-2">First Name</label>
-                                        <input type="text" value="Alex" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-300 mb-2">Last Name</label>
-                                        <input type="text" value="Johnson" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
+                            <form class="space-y-6" onsubmit="updateProfile(event)">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                                    <input name="name" type="text" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                                    <input type="email" value="alex.johnson@example.com" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <input name="email" type="email" readonly class="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-slate-400 focus:outline-none">
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-300 mb-2">Age</label>
-                                        <input type="number" value="28" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-300 mb-2">Height (cm)</label>
-                                        <input type="number" value="175" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-300 mb-2">Weight (kg)</label>
-                                        <input type="number" value="70" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2">BMI</label>
+                                    <input name="bmi" type="number" step="0.1" class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 </div>
                                 <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300">
                                     Update Profile
                                 </button>
+                            </form>
+                            
+                            <!-- Toast Container -->
+                            <div id="toast-container"></div>
                             </form>
                         </div>
 
@@ -567,28 +569,28 @@
                                 <div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                                     <i class="fas fa-user text-3xl text-white"></i>
                                 </div>
-                                <h3 class="text-xl font-semibold text-white mb-2">Alex Johnson</h3>
-                                <p class="text-slate-400">Fitness Enthusiast</p>
+                                <h3 id="profile-display-name" class="text-xl font-semibold text-white mb-2">Loading...</h3>
+                                <p id="profile-display-email" class="text-slate-400">Loading...</p>
                             </div>
 
                             <div class="glass-effect rounded-2xl p-6">
                                 <h4 class="text-lg font-semibold text-white mb-4">Quick Stats</h4>
-                                <div class="space-y-4">
+                                <div class="space-y-4" id="profile-stats">
                                     <div class="flex justify-between">
                                         <span class="text-slate-400">Total Workouts</span>
-                                        <span class="text-white font-semibold">127</span>
+                                        <span class="text-white font-semibold">0</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-slate-400">Total Hours</span>
-                                        <span class="text-white font-semibold">89.5h</span>
+                                        <span class="text-slate-400">Total Exercises</span>
+                                        <span class="text-white font-semibold">0</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-slate-400">Calories Burned</span>
-                                        <span class="text-white font-semibold">12,450</span>
+                                        <span class="text-slate-400">BMI</span>
+                                        <span class="text-white font-semibold">-</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-slate-400">Current Streak</span>
-                                        <span class="text-white font-semibold">7 days</span>
+                                        <span class="text-slate-400">Member Since</span>
+                                        <span class="text-white font-semibold">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -652,6 +654,7 @@
                 currentUser = { email: savedEmail, name: savedEmail.split('@')[0] };
                 showApp();
                 loadDashboardData();
+                loadUserProfile();
             }
         });
 
@@ -712,7 +715,16 @@
                 });
                 
                 if (response.ok) {
-                    currentUser = { email, name: email.split('@')[0] };
+                    // Load user data
+                    const userResponse = await fetch(`/api/users/profile?email=${encodeURIComponent(email)}`);
+                    let userData = { email, name: email.split('@')[0] };
+                    
+                    if (userResponse.ok) {
+                        const user = await userResponse.json();
+                        userData = { ...user, email };
+                    }
+                    
+                    currentUser = userData;
                     localStorage.setItem('userEmail', email);
                     showApp();
                     loadDashboardData();
@@ -795,6 +807,8 @@
             // Load page-specific data
             if (pageId === 'history-page') {
                 loadWorkoutHistory();
+            } else if (pageId === 'profile-page') {
+                loadUserProfile();
             }
             
             // Hide mobile menu
@@ -1082,6 +1096,11 @@
 
         // Workout Functions
         async function startWorkout() {
+            if (!currentUser?.email) {
+                alert('Please login first');
+                return;
+            }
+            
             const title = prompt('Enter workout title:');
             if (!title) return;
             
@@ -1105,7 +1124,7 @@
             }
             
             try {
-                const response = await fetch(`/api/workouts?email=${currentUser.email}`, {
+                const response = await fetch(`/api/workouts?email=${encodeURIComponent(currentUser.email)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title, exercises })
@@ -1113,19 +1132,139 @@
                 
                 if (response.ok) {
                     alert('Workout saved successfully! 💪');
-                    loadDashboardData();
+                    await loadDashboardData();
                     if (currentPage === 'history-page') {
-                        loadWorkoutHistory();
+                        await loadWorkoutHistory();
                     }
                 } else {
-                    alert('Failed to save workout');
+                    const errorText = await response.text();
+                    console.error('Workout save error:', errorText);
+                    alert('Failed to save workout: ' + errorText);
                 }
             } catch (error) {
                 console.error('Error saving workout:', error);
-                alert('Failed to save workout');
+                alert('Failed to save workout: ' + error.message);
             }
         }
 
+        // Profile Functions
+        async function loadUserProfile() {
+            if (!currentUser?.email) return;
+            
+            try {
+                const response = await fetch(`/api/users/profile?email=${encodeURIComponent(currentUser.email)}`);
+                if (response.ok) {
+                    const user = await response.json();
+                    updateProfileForm(user);
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+        
+        function updateProfileForm(user) {
+            const profileForm = document.querySelector('#profile-page form');
+            if (!profileForm) return;
+            
+            const nameInput = profileForm.querySelector('input[name="name"]');
+            const emailInput = profileForm.querySelector('input[name="email"]');
+            const bmiInput = profileForm.querySelector('input[name="bmi"]');
+            
+            if (nameInput) nameInput.value = user.name || '';
+            if (emailInput) emailInput.value = user.email || '';
+            if (bmiInput) bmiInput.value = user.bmi || '';
+            
+            // Update profile display
+            const profileName = document.getElementById('profile-display-name');
+            const profileEmail = document.getElementById('profile-display-email');
+            if (profileName) profileName.textContent = user.name || user.email;
+            if (profileEmail) profileEmail.textContent = user.email || '';
+            
+            // Update stats
+            loadProfileStats();
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast glass-effect rounded-xl p-4 flex items-center gap-3 min-w-80`;
+            
+            const icon = type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400';
+            toast.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span class="text-white">${message}</span>
+            `;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        async function updateProfile(e) {
+            e.preventDefault();
+            if (!currentUser?.email) return;
+            
+            const formData = new FormData(e.target);
+            const name = formData.get('name');
+            const bmi = parseFloat(formData.get('bmi')) || 0;
+            
+            try {
+                const response = await fetch(`/api/users/profile?email=${encodeURIComponent(currentUser.email)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, bmi })
+                });
+                
+                if (response.ok) {
+                    const updatedUser = await response.json();
+                    currentUser = { ...currentUser, ...updatedUser };
+                    showToast('Profile updated successfully!');
+                    updateProfileForm(updatedUser);
+                    loadProfileStats();
+                } else {
+                    showToast('Failed to update profile', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showToast('Failed to update profile', 'error');
+            }
+        }
+        
+        async function loadProfileStats() {
+            if (!currentUser?.email) return;
+            
+            try {
+                const response = await fetch(`/api/workout-history/summary?email=${encodeURIComponent(currentUser.email)}`);
+                if (response.ok) {
+                    const summary = await response.json();
+                    updateProfileStats(summary);
+                }
+            } catch (error) {
+                console.error('Error loading profile stats:', error);
+            }
+        }
+        
+        function updateProfileStats(summary) {
+            const statsContainer = document.getElementById('profile-stats');
+            if (!statsContainer) return;
+            
+            const statItems = statsContainer.querySelectorAll('.flex.justify-between');
+            if (statItems.length >= 4) {
+                statItems[0].querySelector('.font-semibold').textContent = summary.totalWorkouts || 0;
+                statItems[1].querySelector('.font-semibold').textContent = summary.totalExercises || 0;
+                statItems[2].querySelector('.font-semibold').textContent = currentUser?.bmi ? currentUser.bmi.toFixed(1) : '-';
+                
+                // Calculate member since (assuming user creation date from oldest workout or current date)
+                const memberSince = summary.oldestWorkout ? 
+                    new Date(summary.oldestWorkout).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 
+                    new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                statItems[3].querySelector('.font-semibold').textContent = memberSince;
+            }
+        }
+        
         // Responsive behavior
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
